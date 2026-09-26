@@ -1,60 +1,122 @@
 import { describe, it, expect } from 'vitest';
-import { simplifyDocumentWithAI, compareDocumentsWithAI, askDocumentQuestionWithAI, generateLawyerPrepPacket } from '../services/geminiLegalService';
+import {
+  simplifyDocumentWithAI,
+  compareDocumentsWithAI,
+  askDocumentQuestionWithAI,
+  generateLawyerPrepPacket
+} from '../services/geminiLegalService';
+import { sanitizeInput, validateDocumentInput } from '../utils/security';
 import { SAMPLE_LEGAL_DOCS } from '../data/sampleLegalDocs';
 
-describe('JurisEase AI Legal Intelligence Engine Tests', () => {
-  const sampleDoc = SAMPLE_LEGAL_DOCS[0];
+describe('JurisEase AI - Comprehensive Test Suite', () => {
+  const [employmentDoc, leaseDoc, saasDoc] = SAMPLE_LEGAL_DOCS;
 
-  it('correctly deconstructs and simplifies employment agreement clauses', async () => {
-    const analysis = await simplifyDocumentWithAI(sampleDoc.content);
+  describe('Problem Statement: Legal Document Simplification', () => {
+    it('simplifies complex employment agreement clauses and calculates readability boost', async () => {
+      const analysis = await simplifyDocumentWithAI(employmentDoc.content);
 
-    expect(analysis).toBeDefined();
-    expect(analysis.clauses.length).toBeGreaterThan(0);
-    expect(analysis.readabilityScoreSimplified).toBeGreaterThan(analysis.readabilityScoreOriginal);
-    expect(analysis.executiveSummary).toBeTruthy();
+      expect(analysis).toBeDefined();
+      expect(analysis.clauses.length).toBeGreaterThan(0);
+      expect(analysis.readabilityScoreSimplified).toBeGreaterThan(analysis.readabilityScoreOriginal);
+      expect(analysis.executiveSummary).toBeTruthy();
 
-    // Check that non-compete was flagged as high or critical risk
-    const nonCompeteClause = analysis.clauses.find(c => c.originalText.includes('NON-COMPETITION'));
-    expect(nonCompeteClause).toBeDefined();
-    expect(['high', 'critical']).toContain(nonCompeteClause?.riskLevel);
+      const nonCompeteClause = analysis.clauses.find(c => c.originalText.includes('NON-COMPETITION'));
+      expect(nonCompeteClause).toBeDefined();
+      expect(['high', 'critical']).toContain(nonCompeteClause?.riskLevel);
+    });
+
+    it('identifies unannounced landlord entry in residential lease as critical risk', async () => {
+      const analysis = await simplifyDocumentWithAI(leaseDoc.content);
+      const entryClause = analysis.clauses.find(c => c.originalText.includes('RIGHT OF ENTRY'));
+
+      expect(entryClause).toBeDefined();
+      expect(entryClause?.riskLevel).toBe('critical');
+      expect(entryClause?.simplifiedText.toLowerCase()).toContain('unlock and enter');
+    });
+
+    it('detects unilateral terms modification and AI model training in SaaS policy', async () => {
+      const analysis = await simplifyDocumentWithAI(saasDoc.content);
+      const aiClause = analysis.clauses.find(c => c.originalText.includes('AI MODEL TRAINING'));
+
+      expect(aiClause).toBeDefined();
+      expect(aiClause?.riskLevel).toBe('high');
+      expect(aiClause?.riskExplanation).toContain('train public AI models');
+    });
   });
 
-  it('accurately identifies arbitration and class action waiver risk', async () => {
-    const analysis = await simplifyDocumentWithAI(sampleDoc.content);
-    const arbClause = analysis.clauses.find(c => c.originalText.includes('ARBITRATION'));
+  describe('Problem Statement: Contract Comparison & Diffing', () => {
+    it('compares standard vs counter-proposal and flags risk shifts', async () => {
+      const comparison = await compareDocumentsWithAI(
+        employmentDoc.content,
+        employmentDoc.compareContent || ''
+      );
 
-    expect(arbClause).toBeDefined();
-    expect(arbClause?.riskLevel).toBe('critical');
-    expect(arbClause?.riskExplanation).toContain('constitutional right');
+      expect(comparison).toBeDefined();
+      expect(comparison.diffItems.length).toBeGreaterThan(0);
+
+      const favorableChanges = comparison.diffItems.filter(d => d.favorsParty === 'Doc B');
+      expect(favorableChanges.length).toBeGreaterThan(0);
+      expect(comparison.overallRecommendation).toContain('Document B');
+    });
+
+    it('handles identical document comparison gracefully', async () => {
+      const comparison = await compareDocumentsWithAI(employmentDoc.content, employmentDoc.content);
+      expect(comparison).toBeDefined();
+      const identicalItems = comparison.diffItems.filter(d => d.changeType === 'identical');
+      expect(identicalItems.length).toBe(comparison.diffItems.length);
+    });
   });
 
-  it('detects risk shift during contract comparison', async () => {
-    const comparison = await compareDocumentsWithAI(sampleDoc.content, sampleDoc.compareContent || '');
+  describe('Problem Statement: Grounded Q&A Assistant with Citations', () => {
+    it('answers termination questions with accurate clause citations', async () => {
+      const question = 'Can the company terminate me without any notice or cause?';
+      const response = await askDocumentQuestionWithAI(question, employmentDoc.content, []);
 
-    expect(comparison).toBeDefined();
-    expect(comparison.diffItems.length).toBeGreaterThan(0);
-    
-    // Counter draft should favor Doc B (more balanced)
-    const hasDocBFavored = comparison.diffItems.some(d => d.favorsParty === 'Doc B');
-    expect(hasDocBFavored).toBe(true);
+      expect(response).toBeDefined();
+      expect(response.text.toLowerCase()).toContain('at-will');
+      expect(response.citations?.length).toBeGreaterThan(0);
+      expect(response.suggestedQuestions?.length).toBeGreaterThan(0);
+    });
+
+    it('answers tenant deposit questions based on lease terms', async () => {
+      const question = 'Can my landlord take money from my security deposit for normal wear and tear?';
+      const response = await askDocumentQuestionWithAI(question, leaseDoc.content, []);
+
+      expect(response).toBeDefined();
+      expect(response.text.toLowerCase()).toContain('deposit');
+      expect(response.citations?.some(c => c.title.toLowerCase().includes('deposit'))).toBe(true);
+    });
   });
 
-  it('answers grounded questions citing relevant clauses', async () => {
-    const question = 'What are the rules regarding arbitration and can I take them to court?';
-    const response = await askDocumentQuestionWithAI(question, sampleDoc.content, []);
+  describe('Problem Statement: Legal Consultation Prep Packet', () => {
+    it('generates prioritized attorney questions, evidence checklists, and timeline', () => {
+      const packet = generateLawyerPrepPacket(
+        employmentDoc.content,
+        'Concerned about 24-month non-compete and off-hours IP assignment'
+      );
 
-    expect(response).toBeDefined();
-    expect(response.text.toLowerCase()).toContain('arbitration');
-    expect(response.citations?.length).toBeGreaterThan(0);
+      expect(packet).toBeDefined();
+      expect(packet.topRisksToAddress.length).toBeGreaterThanOrEqual(3);
+      expect(packet.criticalQuestionsForAttorney.length).toBe(5);
+      expect(packet.documentsToBring.length).toBeGreaterThanOrEqual(4);
+      expect(packet.suggestedTimeline.length).toBeGreaterThanOrEqual(4);
+    });
   });
 
-  it('generates an actionable attorney consultation preparation packet', () => {
-    const packet = generateLawyerPrepPacket(sampleDoc.content, 'Concerned about non-compete clause');
+  describe('Security & Input Validation', () => {
+    it('sanitizes malicious script tags and event handlers to prevent XSS', () => {
+      const maliciousInput = '<script>alert("hack")</script><b onmouseover="stealCookies()">Test</b>';
+      const sanitized = sanitizeInput(maliciousInput);
 
-    expect(packet).toBeDefined();
-    expect(packet.topRisksToAddress.length).toBeGreaterThan(0);
-    expect(packet.criticalQuestionsForAttorney.length).toBeGreaterThanOrEqual(4);
-    expect(packet.documentsToBring.length).toBeGreaterThan(0);
-    expect(packet.suggestedTimeline.length).toBeGreaterThan(0);
+      expect(sanitized).not.toContain('<script>');
+      expect(sanitized).not.toContain('onmouseover');
+      expect(sanitized).toContain('Test');
+    });
+
+    it('validates document character constraints against DoS', () => {
+      expect(validateDocumentInput('').valid).toBe(false);
+      expect(validateDocumentInput('Valid contract clause').valid).toBe(true);
+      expect(validateDocumentInput('a'.repeat(250_000)).valid).toBe(false);
+    });
   });
 });
