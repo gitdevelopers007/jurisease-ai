@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply antialiased bg-slate-50 text-slate-900 transition-colors duration-200;
+  }
+}
+
+/* Print styling for Attorney Consultation Packet */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  header, nav, .print\:hidden {
+    display: none !important;
+  }
+}
