@@ -1,9 +1,11 @@
-# JurisEase AI: AI for Legal Assistance & Universal Access ⚖️
+# AI for Legal Assistance & Access - JurisEase AI ⚖️
 
-> **Democratizing Legal Clarity & Fairness through Responsible GenAI Document Intelligence.**
+> **Democratizing Legal Clarity & Basic Legal Assistance through Responsible GenAI Document Intelligence.**
 >
-> Live Deployment: [https://gitdevelopers007.github.io/jurisease-ai/](https://gitdevelopers007.github.io/jurisease-ai/)  
-> Single-Branch Repository: `main` (<1 MB footprint)
+> Official Challenge Submission: **AI for Legal Assistance & Access**  
+> Live Deployed Link: [https://gitdevelopers007.github.io/jurisease-ai/](https://gitdevelopers007.github.io/jurisease-ai/)  
+> Public GitHub Repository: [https://github.com/gitdevelopers007/jurisease-ai](https://github.com/gitdevelopers007/jurisease-ai)  
+> Single-Branch Repository: `main` (Repository size: < 200 KB)
 
 ---
 

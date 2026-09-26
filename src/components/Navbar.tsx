@@ -13,11 +13,11 @@ export const Navbar: React.FC<NavbarProps> = ({ apiKey, setApiKey, activeTab, se
   const [tempKey, setTempKey] = useState(apiKey);
 
   const tabs = [
-    { id: 'simplify', label: '1. Simplifier & Readability', icon: FileText },
-    { id: 'compare', label: '2. Contract Comparator', icon: Scale },
-    { id: 'risks', label: '3. Red Flag Scanner', icon: AlertTriangle },
-    { id: 'chat', label: '4. Legal Q&A Assistant', icon: Info },
-    { id: 'prep', label: '5. Lawyer Prep Packet', icon: ShieldCheck },
+    { id: 'simplify', label: '1. Simplifying Complex Documents', icon: FileText },
+    { id: 'compare', label: '2. Comparing Contracts & Policies', icon: Scale },
+    { id: 'risks', label: '3. Highlighting Obligations & Risks', icon: AlertTriangle },
+    { id: 'chat', label: '4. Answering Document Questions', icon: Info },
+    { id: 'prep', label: '5. Actionable Summaries & Lawyer Prep', icon: ShieldCheck },
   ];
 
   return (
@@ -32,12 +32,12 @@ export const Navbar: React.FC<NavbarProps> = ({ apiKey, setApiKey, activeTab, se
               </div>
               <div>
                 <div className="flex items-center space-x-2">
-                  <span className="font-bold text-lg tracking-tight">JurisEase AI</span>
+                  <span className="font-bold text-lg tracking-tight">AI for Legal Assistance & Access</span>
                   <span className="bg-blue-500/20 text-blue-300 text-xs px-2 py-0.5 rounded-full font-medium border border-blue-400/30">
-                    GenAI Legal Access
+                    JurisEase AI
                   </span>
                 </div>
-                <p className="text-xs text-slate-400 hidden sm:block">Democratizing Legal Clarity & Fairness</p>
+                <p className="text-xs text-slate-400 hidden sm:block">Empowering Access to Legal Documents, Plain-English Simplification & Rights</p>
               </div>
             </div>
 

@@ -1,5 +1,6 @@
 {
-  "name": "jurisease-ai",
+  "name": "ai-legal-assistance-access",
+  "description": "AI for Legal Assistance & Access - GenAI solution simplifying complex legal documents, comparing contracts, highlighting obligations and risks, answering questions, and generating attorney prep packets.",
   "private": true,
   "version": "1.0.0",
   "type": "module",
